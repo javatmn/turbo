@@ -558,13 +558,13 @@ function web.RequestHandler:_gen_headers()
     if #self._set_cookie ~= 0 then
         local c = self._set_cookie
         for i = 1, #c do
-            local expire_time
+            local expire_time, expire_str
             if c[i].expire_hours == 0 then
-                expire_time = 0
+                expire_str = "0"
             else
                 expire_time = os.time() + (c[i].expire_hours*60*60)
+                expire_str = util.time_format_cookie(expire_time)
             end
-            local expire_str = util.time_format_cookie(expire_time)
             local cookie = string.format("%s=%s; path=%s; expires=%s",
                 escape.escape(c[i].name),
                 escape.escape(c[i].value or ""),
