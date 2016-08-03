@@ -118,6 +118,7 @@ Usage inside a ``turbo.web.RequestHandler`` method:
 
 	* ``method`` - The HTTP method to use. Default is ``GET``
 	* ``params`` - Provide parameters as table.
+	* ``keep_alive`` - Reuse connection if scenario supports it.
 	* ``cookie`` - The cookie to use.
 	* ``http_version`` - Set HTTP version. Default is HTTP1.1
 	* ``use_gzip`` - Use gzip compression. Default is true.
@@ -138,7 +139,7 @@ Represents a HTTP response by a few attributes. Returned by ``turbo.async.HTTPCl
 	:error: (Table) Table with code and message members. Possible codes is defined in ``async.errors``. Always check if the error attribute is set, before trying to access others. If error is set, then all of the other attributes, except request_time is nil.
 	:request: (HTTPHeaders class instance) The request header sent to the server.
 	:code: (Number) The HTTP response code
-	:headers: (HTTPHeader class instance) Response headers recieved from the server.
+	:headers: (HTTPHeader class instance) Response headers received from the server.
 	:body: (String) Body of response
 	:url: (String) The URL that was used for final resource.
 	:request_time: (Number) msec used to process request.

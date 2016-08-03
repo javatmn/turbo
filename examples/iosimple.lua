@@ -1,6 +1,6 @@
---- Turbo.lua signalfd example
+--- Turbo.lua Simplified IO example
 --
--- Copyright 2014 John Abrahamsen
+-- Copyright 2016 John Abrahamsen
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -14,21 +14,14 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+local turbo = require "turbo"
 
-local turbo = require("turbo")
-local io = turbo.ioloop.instance()
+turbo.ioloop.instance():add_callback(function()
+    local stream = turbo.iosimple.dial("tcp://turbolua.org:80")
+    stream:write("GET / HTTP/1.0\r\n\r\n")
 
-print("Press CTRL-C 3 times to exit")
+    local data = stream:read_until_close()
+    print(data)
 
-io:add_callback(function ()
-    local times = 0
-    io:add_signal_handler(turbo.signal.SIGINT, function (signum, info)
-        print(string.format("\nReceived signal SIGINT (%d)", signum))
-        times = times + 1
-        if times == 3 then
-            io:close()
-        end
-    end)
-end)
-io:start()
-
+    turbo.ioloop.instance():close()
+end):start()
