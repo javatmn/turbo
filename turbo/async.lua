@@ -31,6 +31,8 @@ local escape =              require "turbo.escape"
 local crypto =              require "turbo.crypto"
 require "turbo.3rdparty.middleclass"
 
+local json = require('turbo.3rdparty.JSON')
+
 local unpack = util.funpack
 local AF_INET
 if platform.__LINUX__ then
@@ -477,6 +479,11 @@ function async.HTTPClient:_prepare_http_request()
             local len = self.kwargs.body:len()
             self.headers:add("Content-Length", len)
             write_buf = write_buf .. self.kwargs.body .. "\r\n\r\n"
+        elseif type(self.kwargs.body) == "table" then
+            local s = json:encode(self.kwargs.body)
+            self.headers:add("Content-Type", "application/json")
+            self.headers:add("Content-Length", s:len())
+            write_buf = write_buf .. s .. "\r\n\r\n"
         else
             self:_throw_error(errors.INVALID_BODY,
                 "Request body is not a string.")
