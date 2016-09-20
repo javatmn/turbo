@@ -86,7 +86,7 @@ if platform.__WINDOWS__ then
                   Catastrophic failure.")
         end
         data = ffi.cast("char*", data)
-        mask = ffi.cast("char*", mask32)
+        local mask = ffi.cast("char*", mask32)
         while i < sz do
             buf[i] = bit.bxor(data[i],  mask[i % 4])
             i = i + 1
@@ -244,9 +244,9 @@ if le then
 
     local _tmp_convert_64 = ffi.new("uint64_t[1]")
     function websocket.WebSocketStream:_frame_len_64(data)
-        ffi.copy(_tmp_convert_64, data, 2)
+        ffi.copy(_tmp_convert_64, data, 8)
         self._payload_len = tonumber(
-            ENDIAN_SWAP_U64(_tmp_convert_64))
+            ENDIAN_SWAP_U64(_tmp_convert_64[0]))
         if self._mask_bit then
             self.stream:read_bytes(4, self._frame_mask_key, self)
         else
@@ -303,7 +303,7 @@ if le then
 
         if self.mask_outgoing == true then
             -- Create a random mask.
-            ws_mask = ffi.new("unsigned char[4]")
+            local ws_mask = ffi.new("unsigned char[4]")
             ws_mask[0] = math.random(0x0, 0xff)
             ws_mask[1] = math.random(0x0, 0xff)
             ws_mask[2] = math.random(0x0, 0xff)
@@ -580,6 +580,7 @@ websocket.WebSocketClient = class("WebSocketClient")
 websocket.WebSocketClient:include(websocket.WebSocketStream)
 
 function websocket.WebSocketClient:initialize(address, kwargs)
+    self.mask_outgoing = true
     self.address = address
     self.kwargs = kwargs or {}
     self._connect_time = util.gettimemonotonic()
