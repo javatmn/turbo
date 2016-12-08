@@ -49,7 +49,11 @@ local iosimple = {} -- iosimple namespace
 -- @return (IOSimple class instance) or raise error.
 function iosimple.dial(address, ssl, io)
     assert(type(address) == "string", "No address in call to dial.")
+    local path = address:match("^unix://(.+)")
     local protocol, host, port = address:match("^(%a+)://(.+):(%d+)")
+    if path then
+        protocol, host, port = "unix", "127.0.0.1", 0
+    end
     port = tonumber(port)
     assert(
         protocol and host,
@@ -112,7 +116,7 @@ function iosimple.dial(address, ssl, io)
         )
     else
         stream = iostream.IOStream(sock)
-        stream:connect(host, port, address_family,
+        stream:connect(host, path or port, address_family,
             function()
                 ctx:set_arguments({true})
                 ctx:finalize_context()

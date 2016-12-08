@@ -130,7 +130,8 @@ if platform.__LINUX__ and not _G.__TURBO_USE_LUASOCKET__ then
         callback, fail_callback, arg)
         assert(type(address) == "string",
             "Address is not a string.")
-        assert(type(port) == "number",
+        assert(family == socket.AF_UNIX and type(port) == 'string' or
+                family ~= socket.AF_UNIX and type(port) == "number",
             "Port is not a number.")
         assert((not family or type(family) == "number"),
             "Family is not a number or nil")
@@ -139,20 +140,43 @@ if platform.__LINUX__ and not _G.__TURBO_USE_LUASOCKET__ then
         self._connect_callback = callback
         self._connect_callback_arg = arg
         local servinfo, sockaddr
-        local status, err = pcall(function()
-            local dns = iostream.DNSResolv(self.io_loop, self.args)
-            servinfo, sockaddr = dns:resolv(address, port, family)
-        end)
-        if not status then
-            self:_handle_connect_fail(err or "DNS resolv error")
-            return
-        end
-        local ai, err = sockutils.connect_addrinfo(
-                self.socket, servinfo)
-        if not ai then
-            self:_handle_connect_fail(
-                "Could not connect to remote server. " .. err or "")
-            return
+        if family ~= socket.AF_UNIX then
+            local status, err = pcall(function()
+                local dns = iostream.DNSResolv(self.io_loop, self.args)
+                servinfo, sockaddr = dns:resolv(address, port, family)
+            end)
+            if not status then
+                self:_handle_connect_fail(err or "DNS resolv error")
+                return
+            end
+            local ai, err = sockutils.connect_addrinfo(
+                    self.socket, servinfo)
+            if not ai then
+                self:_handle_connect_fail(
+                    "Could not connect to remote server. " .. err or "")
+                return
+            end
+        else
+            local unix_addr = ffi.new("struct sockaddr_un");
+            unix_addr.sun_family = socket.AF_UNIX;
+            ffi.copy(unix_addr.sun_path, ffi.cast("const char *", port),
+                    math.min(#port, ffi.sizeof(unix_addr.sun_path)))
+            local done = false
+            repeat
+                local r = ffi.C.connect(self.socket,
+                        ffi.cast("const struct sockaddr *", unix_addr), ffi.sizeof(unix_addr))
+                if r ~= 0 then
+                    local errno = ffi.errno()
+                    if errno ~= EWOULDBLOCK and errno ~= EAGAIN then
+                        err = socket.strerror(errno)
+                        self:_handle_connect_fail(
+                                "Could not connect to remote server. " .. err or "")
+                        return
+                    end
+                else
+                    done = true
+                end
+            until done
         end
         self:_add_io_state(ioloop.WRITE)
         return 0 -- Too avoid breaking backwards compability.
