@@ -109,8 +109,8 @@ function iosimple.dial(address, ssl, io)
                 ctx:set_arguments({true})
                 ctx:finalize_context()
             end,
-            function(rc, strerr, errdesc)
-                ctx:set_arguments({false, rc, strerr, errdesc})
+            function(errdesc)
+                ctx:set_arguments({false, errdesc})
                 ctx:finalize_context()
             end
         )
@@ -121,13 +121,13 @@ function iosimple.dial(address, ssl, io)
                 ctx:set_arguments({true})
                 ctx:finalize_context()
             end,
-            function(rc, strerr, errdesc)
-                ctx:set_arguments({false, rc, strerr, errdesc})
+            function(errdesc)
+                ctx:set_arguments({false, errdesc})
                 ctx:finalize_context()
             end
         )
     end
-    local rc, sockerr, strerr, errdesc = coroutine.yield(ctx)
+    local rc, errdesc = coroutine.yield(ctx)
     if rc ~= true then
         error(errdesc)
     end

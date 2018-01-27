@@ -502,11 +502,7 @@ function iostream.IOStream:_handle_connect_fail(err)
     self._connect_callback = nil
     self._connect_callback_arg = nil
     self._connecting = false
-    if arg then
-        cb(arg, err)
-    else
-        cb(err)
-    end
+    self:_run_callback(cb, arg, err)
 end
 
 --- Main event handler for the IOStream.
@@ -672,6 +668,9 @@ if platform.__LINUX__ and not _G.__TURBO_USE_LUASOCKET__ then
             errno = ffi.errno()
             if errno == EWOULDBLOCK or errno == EAGAIN then
                 return
+            elseif errno == ECONNRESET then
+                self:close()
+                return nil
             else
                 local fd = self.socket
                 self:close()
@@ -680,6 +679,7 @@ if platform.__LINUX__ and not _G.__TURBO_USE_LUASOCKET__ then
                       fd,
                       errno,
                       socket.strerror(errno)))
+                return
             end
         end
         if sz == 0 then
@@ -1523,6 +1523,8 @@ elseif _G.TURBO_SSL then
             end
         elseif err == "wantread" then
             self:_add_io_state(ioloop.READ)
+        else
+            self:close()
         end
     end
 
