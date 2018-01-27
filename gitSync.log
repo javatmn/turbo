@@ -1,0 +1,5 @@
+  git remote add upstream https://github.com/Leask/BRICKS.git
+  git fetch upstream
+  git merge upstream/master
+  git log
+  git push  origin master
